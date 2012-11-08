@@ -20,6 +20,7 @@ package Gitolite::Conf::Load;
 use Exporter 'import';
 
 use Gitolite::Common;
+use Gitolite::Cache;
 use Gitolite::Rc;
 
 use strict;
@@ -74,9 +75,23 @@ sub access {
     my @rules;
     my $deny_rules;
 
-    load($repo);
-    @rules = rules( $repo, $user );
-    $deny_rules = option( $repo, 'deny-rules' );
+    # -- deal with cache --
+    my $n_ts;
+    if (    _cache_permsTS_ok( $repo, \$n_ts )
+        and cache_get( 'SCALAR', 'deny-rules', $repo,          \$deny_rules )
+        and cache_get( 'ARRAY',  'rules',      "$repo, $user", \@rules ) ) {
+        # nothing to do
+    } else {
+        load($repo);
+        @rules = rules( $repo, $user );
+        $deny_rules = option( $repo, 'deny-rules' );
+
+        # save stuff
+        cache_set( 'SCALAR', 'deny-rules', $repo, $deny_rules || 0 );
+        cache_set( 'ARRAY', 'rules', "$repo, $user", @rules );
+        # save gl-perms timestamp
+        cache_set( 'SCALAR', 'gl-perms.TS', $repo, $n_ts );
+    }
 
     # sanity check the only piece the user can control
     _die "invalid characters in ref or filename: '$ref'\n" unless $ref =~ $REF_OR_FILENAME_PATT;
@@ -310,6 +325,8 @@ sub memberships {
     my ( $type, $base, $repo ) = @_;
     $repo ||= '';
     my @ret;
+    return @ret if cache_get( 'ARRAY', 'memberships', "$type, $base, $repo", \@ret );
+
     my $base2 = '';
 
     @ret = ( $base, '@all' );
@@ -346,6 +363,16 @@ sub memberships {
 
     @ret = @{ sort_u( \@ret ) };
     trace( 3, sort @ret );
+    cache_set(
+        'ARRAY',
+        'memberships',
+        (
+            $type eq 'user'
+            ? "$type, $repo, $base"     # need repo up front for easy flushing
+            : "$type, $base, $repo"
+        ),
+        @ret
+    );
     return @ret;
 }
 
@@ -447,6 +474,17 @@ sub creator {
         my @extgroups = map { s/^@?/@/; $_; } split ' ', `$rc{GROUPLIST_PGM} $user`;
         return ( $cache{$user} = \@extgroups );
     }
+}
+
+sub _cache_permsTS_ok {
+    my ($repo, $ref) = @_;
+
+    # timestamp of gl-perms file, on disk versus cached
+    my $o_ts; cache_get('SCALAR', 'gl-perms.TS', $repo, \$o_ts); $o_ts ||= 0;
+    my $n_ts = ( stat "$ENV{GL_REPO_BASE}/$repo.git/gl-perms" )[9] || 0;
+    ${$ref} = $n_ts;
+    cache_flush_repo($repo) if $o_ts != $n_ts;
+    return $o_ts == $n_ts;
 }
 
 # ----------------------------------------------------------------------

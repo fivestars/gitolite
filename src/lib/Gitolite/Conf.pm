@@ -13,6 +13,7 @@ use Exporter 'import';
 use Getopt::Long;
 
 use Gitolite::Common;
+use Gitolite::Cache;
 use Gitolite::Rc;
 use Gitolite::Conf::Sugar;
 use Gitolite::Conf::Store;
@@ -33,7 +34,10 @@ sub compile {
     # the order matters; new repos should be created first, to give store a
     # place to put the individual gl-conf files
     new_repos();
+
+    cache_control('stop');
     store();
+    cache_control('start');
 
     for my $repo ( @{ $rc{NEW_REPOS_CREATED} } ) {
         trigger( 'POST_CREATE', $repo );
