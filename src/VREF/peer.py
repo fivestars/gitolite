@@ -5,9 +5,10 @@ import sys
 from ownership_utils import build_commit_to_acceptors_dict, p
 
 
-gl_user = os.environ['GL_USER']
-
 oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
+
+gl_user = os.environ['GL_USER']
+user_phid = p.user.query(usernames=[gl_user])[0]['phid']
 
 GET_COMMITS_COMMAND = 'git log --pretty=%H {oldsha}..{newsha}'.format(
         user=gl_user, oldsha=oldsha, newsha=newsha)
@@ -31,7 +32,7 @@ def check_peer(commit_hashes):
     return True
 
 
-commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split('\n')
+commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split()
 
 if not check_peer(commit_hashes):
     print 'VREF/PEER'

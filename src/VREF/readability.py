@@ -11,6 +11,7 @@ username_to_phid = dict((user['userName'], user['phid']) for user in p.user.quer
 oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
 
 gl_user = os.environ['GL_USER']
+user_phid = (phid for username, phid in username_to_phid.items() if username == gl_user).next()
 
 GET_COMMITS_COMMAND = 'git log --pretty=%H {oldsha}..{newsha}'.format(
         user=gl_user, oldsha=oldsha, newsha=newsha)
@@ -30,7 +31,7 @@ def check_readability(commit_hashes):
 
     for commit_hash in commit_hashes:
         files_in_commit = get_files(commit_hash)
-        accepted_by = commit_to_acceptors[commit_hash] | set([gl_user])
+        accepted_by = commit_to_acceptors[commit_hash] | set([user_phid])
 
         for f in files_in_commit:
             if not all(check(f)(accepted_by) for check in language_checks):
@@ -40,7 +41,7 @@ def check_readability(commit_hashes):
     return True
 
 
-commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split('\n')
+commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split()
 
 if not check_readability(commit_hashes):
     print 'VREF/READABILITY'  # I think this will trigger the rule to fail

@@ -11,6 +11,7 @@ username_to_phid = dict((user['userName'], user['phid']) for user in p.user.quer
 oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
 
 gl_user = os.environ['GL_USER']
+user_phid = (phid for username, phid in username_to_phid.items() if username == gl_user).next()
 
 # get list of commit hashes (I hope I can do this command even though the code is not merged yet!)
 GET_COMMITS_COMMAND = 'git log --pretty=%H {oldsha}..{newsha}'.format(
@@ -30,7 +31,7 @@ def check_ownership(commit_hashes):
 
     for commit_hash in commit_hashes:
         files_in_commit = get_files(commit_hash)
-        accepted_by = commit_to_acceptors[commit_hash] | set([gl_user])
+        accepted_by = commit_to_acceptors[commit_hash] | set([user_phid])
 
         for f in files_in_commit:
             code_owners = [username_to_phid[user] for user in get_owners(oldsha, f)]
@@ -64,7 +65,7 @@ def get_owners(oldsha, path):
 
 
 commit_hashes = subprocess.Popen(GET_COMMITS_COMMAND,
-    shell=True, stdout=subprocess.PIPE).stdout.read().split('\n')
+    shell=True, stdout=subprocess.PIPE).stdout.read().split()
 
 if not check_ownership(commit_hashes):
     print 'VREF/OWNERSHIP'
