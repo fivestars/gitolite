@@ -25,7 +25,7 @@ def check_peer(commit_hashes):
 
     for commit_hash in commit_hashes:
         if not (commit_to_acceptors[commit_hash] - set([gl_user])):
-            print CHECK_FAIL_MESSAGE.format(dict(hash=commit_hash))
+            print CHECK_FAIL_MESSAGE.format(commit_hash=commit_hash)
             return False
 
     return True

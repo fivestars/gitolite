@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 from readability_checks import language_checks
-from ownership_utils import build_commit_to_acceptors_dict, get_files, read_users_file, p
+from ownership_utils import build_commit_to_acceptors_dict, get_files, p
 
 
 username_to_phid = dict((user['userName'], user['phid']) for user in p.user.query())
@@ -30,21 +30,14 @@ def check_readability(commit_hashes):
 
     for commit_hash in commit_hashes:
         files_in_commit = get_files(commit_hash)
-        accepted_by = commit_to_acceptors[commit_hash]
+        accepted_by = commit_to_acceptors[commit_hash] | set([gl_user])
 
         for f in files_in_commit:
             if not all(check(f)(accepted_by) for check in language_checks):
-                print CHECK_FAIL_MESSAGE.format(dict(filename=f, commit_hash=commit_hash))
+                print CHECK_FAIL_MESSAGE.format(filename=f, commit_hash=commit_hash)
                 return False
 
     return True
-
-
-def identify_language(filename):
-    "Determines the type of file for readability"
-    for language, check_func in language_checks:
-        if check_func(filename):
-            return language
 
 
 commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split('\n')

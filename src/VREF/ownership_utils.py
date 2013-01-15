@@ -1,4 +1,5 @@
 from collections import defaultdict
+import os
 import subprocess
 
 from phabricator import Phabricator
@@ -23,7 +24,7 @@ def build_commit_to_acceptors_dict(commit_hashes):
                                              if 'LGTM' in comment['content']]
 
         for commit in commits_in_revision:
-            commit_to_acceptors.union(accepted_by)
+            commit_to_acceptors[commit] = commit_to_acceptors[commit] | set(accepted_by)
 
     return commit_to_acceptors
 
@@ -31,13 +32,30 @@ def build_commit_to_acceptors_dict(commit_hashes):
 def get_files(commit_hash):
     "Takes a commit hash and returns a list of files edited in the commit"
     command = 'git show --pretty="format:" --name-only {0}'.format(commit_hash)
-    files_altered = subprocess.call(command).split()
+    files_altered = subprocess.Popen(command, shell=True,
+            stdout=subprocess.PIPE).stdout.read().split()
 
     return files_altered
 
 
-def read_users_file(path):
-    "Reads a .owners or readability file with usernames separated by whitespace/newlines"
-    with open(path) as users_file:
-        users = [line.strip().strip('*') for line in users_file.readlines() if not line.startswith('#')]
-    return users
+def splitpath(path):
+    "Splits a path into a list of its individual pieces"
+    parts = []
+    head, tail = os.path.split(path)
+    parts.insert(0, tail)
+    while head:
+        head, tail = os.path.split(head)
+        parts.insert(0, tail)
+    return parts
+
+
+def find_git_hash(ls_tree, name):
+    "Takes a list of git ls-tree output and returns hash of desired file/dir if it exists"
+    for line in ls_tree:
+        if not line:
+            continue
+        _, git_object, git_hash, filename = line.split()
+        if filename == name:
+            return git_hash
+
+    return None

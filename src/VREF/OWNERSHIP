@@ -7,12 +7,14 @@
 # exit status:
 #   always 0
 
-die() { echo "$@" >&2; exit 1; }
-[ -z "$8" ] && die "not meant to be run manually"
+# TODO what to do here?
+# die() { echo "$@" >&2; exit 1; }
+# [ -z "$8" ] && die "not meant to be run manually"
 
 oldsha=$2
 newsha=$3
 
-python ownership.py $oldsha $newsha
+# TODO replace this absolute path with something way better
+python /Users/git/bin/VREF/ownership.py $oldsha $newsha
 
 exit 0
