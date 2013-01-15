@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# gitolite VREF to check code reviewed by someone with readability
+
+# see gitolite docs for what the first 7 arguments mean
+
+# exit status:
+#   always 0
+
+die() { echo "$@" >&2; exit 1; }
+[ -z "$8" ] && die "not meant to be run manually"
+
+oldsha=$2
+newsha=$3
+
+python readability.py $oldsha $newsha
+
+exit 0
