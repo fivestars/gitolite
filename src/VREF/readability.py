@@ -34,7 +34,7 @@ def check_readability(commit_hashes):
         accepted_by = commit_to_acceptors[commit_hash] | set([user_phid])
 
         for f in files_in_commit:
-            if not all(check(f)(accepted_by) for check in language_checks):
+            if not all(check(f)(accepted_by) for _, check in language_checks.items()):
                 print CHECK_FAIL_MESSAGE.format(filename=f, commit_hash=commit_hash)
                 return False
 

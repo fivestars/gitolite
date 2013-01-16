@@ -4,7 +4,7 @@ import os
 class ReadabilityCheck:
     readability = []
 
-    def __init__(file_path):
+    def __init__(self, file_path):
         self.path = file_path
 
     def match(self):
@@ -17,6 +17,6 @@ class ReadabilityCheck:
 
     def __call__(self, accepting_users):
         "Return True if at least one of the accepting users has readability"
-        with_readability = set([user.strip('*') for user in readability])
+        with_readability = set([user.strip('*') for user in self.readability])
 
         return True if set(accepting_users) & with_readability else False

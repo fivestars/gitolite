@@ -11,6 +11,6 @@ class QtCheck(ReadabilityCheck):
     def match(self):
         if super(QtCheck, self).match():
             with open(self.path) as code:
-                return any('PySide' in line for line in code.readlines()):
+                return any('PySide' in line for line in code.readlines())
 
         return False
