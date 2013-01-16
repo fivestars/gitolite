@@ -1,7 +1,7 @@
-from base_check import ReadabilityCheck
+from base_check import ReadabilityChecker
 
 
-class QtCheck(ReadabilityCheck):
+class QtChecker(ReadabilityChecker):
     readability = """
         ram*
     """.split()
@@ -9,7 +9,7 @@ class QtCheck(ReadabilityCheck):
     expected_extension = '.py'
 
     def match(self):
-        if super(QtCheck, self).match():
+        if super(QtChecker, self).match():
             with open(self.path) as code:
                 return any('PySide' in line for line in code.readlines())
 

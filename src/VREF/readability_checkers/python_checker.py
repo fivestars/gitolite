@@ -1,7 +1,7 @@
-from base_check import ReadabilityCheck
+from base_check import ReadabilityChecker
 
 
-class PythonCheck(ReadabilityCheck):
+class PythonChecker(ReadabilityChecker):
     readability = """
         guido*
         kilian*

@@ -1,39 +1,26 @@
-import os
-import subprocess
-import sys
-
-from ownership_utils import build_commit_to_acceptors_dict, p
+from base_ownership import BaseReviewCheck
 
 
-oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
+class Peer(BaseReviewCheck):
+    CHECK_FAIL_MESSAGE = '''
+    Commit {commit_hash}
+    did not get an LGTM from a peer.
+    Have someone look at it and then we can talk.
+    '''
 
-gl_user = os.environ['GL_USER']
-user_phid = p.user.query(usernames=[gl_user])[0]['phid']
+    FALLTHRU = 'VREF/PEER'
 
-GET_COMMITS_COMMAND = 'git log --pretty=%H {oldsha}..{newsha}'.format(
-        user=gl_user, oldsha=oldsha, newsha=newsha)
+    def check(self):
+        "Returns False if a commit has not been accepted on Phabricator by not the pusher"
+        for commit_hash in self.commit_hashes:
+            if not (self.commit_to_acceptors[commit_hash] - set([self.user_phid])):
+                self.fallthru(commit_hash=commit_hash)
+                return False
 
-CHECK_FAIL_MESSAGE = '''
-Commit {commit_hash}
-did not get an LGTM from a peer.
-Have someone look at it and then we can talk.
-'''
-
-
-def check_peer(commit_hashes):
-    "Returns False if a commit has not been accepted on Phabricator by not the pusher"
-    commit_to_acceptors = build_commit_to_acceptors_dict(commit_hashes)
-
-    for commit_hash in commit_hashes:
-        if not (commit_to_acceptors[commit_hash] - set([gl_user])):
-            print CHECK_FAIL_MESSAGE.format(commit_hash=commit_hash)
-            return False
-
-    return True
+        return True
 
 
-commit_hashes = subprocess.Popen(GET_COMMITS_COMMAND,
-    shell=True, stdout=subprocess.PIPE).stdout.read().split()
-
-if not check_peer(commit_hashes):
-    print 'VREF/PEER'
+if __name__ == '__main__':
+    import sys
+    oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
+    Peer(oldsha, newsha).check()

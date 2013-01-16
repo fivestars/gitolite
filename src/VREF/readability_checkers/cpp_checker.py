@@ -1,7 +1,7 @@
-from base_check import ReadabilityCheck
+from base_check import ReadabilityChecker
 
 
-class CppCheck(ReadabilityCheck):
+class CppChecker(ReadabilityChecker):
     readability = """
         daigo*
         harvinder

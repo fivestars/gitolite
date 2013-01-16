@@ -1,48 +1,39 @@
-import os
-import subprocess
-import sys
-
-from readability_checks import language_checks
-from ownership_utils import build_commit_to_acceptors_dict, get_files, p
+from base_ownership import BaseReviewCheck, get_files_from_commit
+from readability_checkers import language_checkers
 
 
-username_to_phid = dict((user['userName'], user['phid']) for user in p.user.query())
+class Readability(BaseReviewCheck):
+    CHECK_FAIL_MESSAGE = '''
+    File {filename} in
+    {commit_hash}
+    needs LGTM from someone with {language} readability!
+    Try one of:
+    {readability}
+    '''
 
-oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
+    FALLTHRU = 'VREF/READABILITY'
 
-gl_user = os.environ['GL_USER']
-user_phid = (phid for username, phid in username_to_phid.items() if username == gl_user).next()
+    def __init__(self, oldsha, newsha, language_checkers):
+        self.language_checkers = language_checkers
 
-GET_COMMITS_COMMAND = 'git log --pretty=%H {oldsha}..{newsha}'.format(
-        user=gl_user, oldsha=oldsha, newsha=newsha)
+    def check(self):
+        "Returns False if a file has not been accepted by someone with readability in its language"
+        for commit_hash in self.commit_hashes:
+            files_in_commit = get_files_from_commit(commit_hash)
+            accepted_by = self.commit_to_acceptors[commit_hash] | set([self.user_phid])
 
-CHECK_FAIL_MESSAGE = '''
-File {filename} in
-{commit_hash}
-needs LGTM from someone with readability!
-'''
-# TODO put in the actual language and list of people with readability
-# into this message. Probably requires modifying the language checking class
+            for f in files_in_commit:
+                for language, checker, in self.language_checkers.items():
+                    c = checker(f)
+                    if c.match() and not c.accepted(accepted_by=accepted_by):
+                        self.fallthru(filename=f, commit_hash=commit_hash, language=language,
+                                readability=c.readability.split())
+                        return False
 
-
-def check_readability(commit_hashes):
-    "Returns False if a file has not been accepted by someone with readability in its language"
-    commit_to_acceptors = build_commit_to_acceptors_dict(commit_hashes)
-
-    for commit_hash in commit_hashes:
-        files_in_commit = get_files(commit_hash)
-        accepted_by = commit_to_acceptors[commit_hash] | set([user_phid])
-
-        for f in files_in_commit:
-            if not all(check(f)(accepted_by) for _, check in language_checks.items()):
-                print CHECK_FAIL_MESSAGE.format(filename=f, commit_hash=commit_hash)
-                return False
-
-    return True
+        return True
 
 
-commit_hashes = subprocess.Popen(GET_COMMITS_COMMAND,
-    shell=True, stdout=subprocess.PIPE).stdout.read().split()
-
-if not check_readability(commit_hashes):
-    print 'VREF/READABILITY'  # I think this will trigger the rule to fail
+if __name__ == '__main__':
+    import sys
+    oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
+    Readability(oldsha, newsha, language_checkers).check()
