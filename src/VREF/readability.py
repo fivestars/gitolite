@@ -41,7 +41,8 @@ def check_readability(commit_hashes):
     return True
 
 
-commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split()
+commit_hashes = subprocess.Popen(GET_COMMITS_COMMAND,
+    shell=True, stdout=subprocess.PIPE).stdout.read().split()
 
 if not check_readability(commit_hashes):
     print 'VREF/READABILITY'  # I think this will trigger the rule to fail

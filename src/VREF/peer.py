@@ -32,7 +32,8 @@ def check_peer(commit_hashes):
     return True
 
 
-commit_hashes = subprocess.call(GET_COMMITS_COMMAND).split()
+commit_hashes = subprocess.Popen(GET_COMMITS_COMMAND,
+    shell=True, stdout=subprocess.PIPE).stdout.read().split()
 
 if not check_peer(commit_hashes):
     print 'VREF/PEER'
