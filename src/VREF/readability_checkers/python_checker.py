@@ -1,4 +1,4 @@
-from base_check import ReadabilityChecker
+from base_checker import ReadabilityChecker
 
 
 class PythonChecker(ReadabilityChecker):

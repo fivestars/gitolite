@@ -6,7 +6,7 @@ from html_checker import HtmlChecker
 
 
 language_checkers = dict(
-    qt=QtChecker,
+    #qt=QtChecker,
     python=PythonChecker,
     javacript=JavascriptChecker,
     cpp=CppChecker,

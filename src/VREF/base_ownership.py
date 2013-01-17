@@ -36,7 +36,7 @@ def find_git_hash(ls_tree, name):
     return None
 
 
-class BaseReviewCheck:
+class BaseReviewCheck(object):
     p = Phabricator()
 
     gl_user = os.environ['GL_USER']
@@ -83,5 +83,6 @@ class BaseReviewCheck:
         return commit_to_acceptors
 
     def fallthru(self, **kwargs):
+        "Prints failure message and VREF fallthru text"
         print self.CHECK_FAIL_MESSAGE.format(**kwargs)
         print self.FALLTHRU

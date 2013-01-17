@@ -14,6 +14,7 @@ class Readability(BaseReviewCheck):
     FALLTHRU = 'VREF/READABILITY'
 
     def __init__(self, oldsha, newsha, language_checkers):
+        super(Readability, self).__init__(oldsha, newsha)
         self.language_checkers = language_checkers
 
     def check(self):
@@ -24,10 +25,13 @@ class Readability(BaseReviewCheck):
 
             for f in files_in_commit:
                 for language, checker, in self.language_checkers.items():
-                    c = checker(f)
-                    if c.match() and not c.accepted(accepted_by=accepted_by):
+
+                    language_checker = checker(f)
+                    accepting_users = [self.phid_to_user[phid] for phid in accepted_by]
+
+                    if language_checker.match() and not language_checker.accepted(accepting_users):
                         self.fallthru(filename=f, commit_hash=commit_hash, language=language,
-                                readability=c.readability.split())
+                                readability=language_checker.readability)
                         return False
 
         return True

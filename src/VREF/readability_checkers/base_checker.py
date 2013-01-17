@@ -1,19 +1,16 @@
 import os
 
 
-class ReadabilityChecker:
+class ReadabilityChecker(object):
     readability = []
 
     def __init__(self, file_path):
         self.path = file_path
 
     def match(self):
-        if not self.hasattr('expected_extension'):
-            raise Exception('Implement in specific class')
-
         _, extension = os.path.splitext(self.path)
 
-        return extension == expected_extension
+        return extension == self.expected_extension
 
     def accepted(self, accepted_by):
         "Return True if at least one of the accepting users has readability"

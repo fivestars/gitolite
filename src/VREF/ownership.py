@@ -1,3 +1,5 @@
+import subprocess
+
 from base_ownership import BaseReviewCheck, get_files_from_commit, splitpath, find_git_hash
 
 

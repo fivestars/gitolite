@@ -1,4 +1,4 @@
-from base_check import ReadabilityChecker
+from base_checker import ReadabilityChecker
 
 
 class QtChecker(ReadabilityChecker):
@@ -9,8 +9,6 @@ class QtChecker(ReadabilityChecker):
     expected_extension = '.py'
 
     def match(self):
-        if super(QtChecker, self).match():
-            with open(self.path) as code:
-                return any('PySide' in line for line in code.readlines())
-
-        return False
+        code = '' # TODO need to read contents of the file using git hashes
+        return (super(QtChecker, self).match() and
+            any('PySide' in line for line in code))
