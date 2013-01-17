@@ -1,4 +1,5 @@
 from base_checker import ReadabilityChecker
+from git_tools import git_readfile
 
 
 class QtChecker(ReadabilityChecker):
@@ -9,6 +10,5 @@ class QtChecker(ReadabilityChecker):
     expected_extension = '.py'
 
     def match(self):
-        code = '' # TODO need to read contents of the file using git hashes
         return (super(QtChecker, self).match() and
-            any('PySide' in line for line in code))
+                'PySide' in git_readfile(self.path, commit_hash=self.commit_hash))
