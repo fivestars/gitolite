@@ -14,7 +14,6 @@
 oldsha=$2
 newsha=$3
 
-# TODO replace this absolute path with something way better
-python /Users/git/bin/VREF/readability.py $oldsha $newsha
+python $GL_BINDIR/VREF/readability.py $oldsha $newsha $PWD
 
 exit 0

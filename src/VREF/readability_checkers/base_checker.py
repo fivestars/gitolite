@@ -4,12 +4,12 @@ import os
 class ReadabilityChecker(object):
     readability = []
 
-    def __init__(self, commit_hash, file_path):
-        self.commit_hash = commit_hash
-        self.path = file_path
+    def __init__(self, file_path, file_contents):
+        self.file_path = file_path
+        self.file_contents = file_contents
 
     def match(self):
-        _, extension = os.path.splitext(self.path)
+        _, extension = os.path.splitext(self.file_path)
 
         return extension == self.expected_extension
 

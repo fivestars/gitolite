@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 
+from git import Repo
 from phabricator import Phabricator
 
 
@@ -11,15 +12,18 @@ class BaseReviewCheck(object):
 
     gl_user = os.environ['GL_USER']
 
-    GET_COMMITS_COMMAND = 'git log --pretty=%H {oldsha}..{newsha}'
-
-    def __init__(self, oldsha, newsha):
+    def __init__(self, oldsha, newsha, repo_path):
         self.oldsha = oldsha
         self.newsha = newsha
-        self.commit_hashes = subprocess.Popen(
-                self.GET_COMMITS_COMMAND.format(oldsha=oldsha, newsha=newsha),
-                shell=True,
-                stdout=subprocess.PIPE).stdout.read().split()
+        self.repo = Repo(repo_path)
+
+        commits = self.repo.commit(newsha).iter_parents()
+        next_commit = commits.next()
+
+        self.commit_hashes = [newsha]
+        while next_commit.hexsha != oldsha:
+            self.commit_hashes.append(next_commit.hexsha)
+            next_commit = commits.next()
 
         self.user_to_phid = dict((user['userName'], user['phid']) for user in self.p.user.query())
         self.phid_to_user = dict((phid, user) for user, phid in self.user_to_phid.items())

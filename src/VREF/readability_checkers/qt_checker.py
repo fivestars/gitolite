@@ -1,5 +1,4 @@
 from base_checker import ReadabilityChecker
-from git_tools import git_readfile
 
 
 class QtChecker(ReadabilityChecker):
@@ -11,4 +10,4 @@ class QtChecker(ReadabilityChecker):
 
     def match(self):
         return (super(QtChecker, self).match() and
-                'PySide' in git_readfile(self.path, commit_hash=self.commit_hash))
+                'PySide' in self.file_contents)

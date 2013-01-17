@@ -22,5 +22,5 @@ class Peer(BaseReviewCheck):
 
 if __name__ == '__main__':
     import sys
-    oldsha, newsha = sys.argv[1:3]  # oldsha and newsha are passed in as first and second arguments
-    Peer(oldsha, newsha).check()
+    oldsha, newsha, repo_path = sys.argv[1:4]
+    Peer(oldsha, newsha, repo_path).check()
