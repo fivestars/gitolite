@@ -1,4 +1,5 @@
-from base_ownership import BaseReviewCheck, get_files_from_commit
+from base_ownership import BaseReviewCheck
+from git_tools import get_files_from_commit
 from readability_checkers import language_checkers
 
 
@@ -7,7 +8,7 @@ class Readability(BaseReviewCheck):
     File {filename} in
     {commit_hash}
     needs LGTM from someone with {language} readability!
-    Try one of:
+    Get one of these people to review it:
     {readability}
     '''
 
@@ -26,7 +27,8 @@ class Readability(BaseReviewCheck):
             for f in files_in_commit:
                 for language, checker, in self.language_checkers.items():
 
-                    language_checker = checker(f)
+                    # should meet readability conditions at last commit, aka newsha
+                    language_checker = checker(self.newsha, f)
                     accepting_users = [self.phid_to_user[phid] for phid in accepted_by]
 
                     if language_checker.match() and not language_checker.accepted(accepting_users):

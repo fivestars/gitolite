@@ -1,13 +1,15 @@
+import os
 import subprocess
 
-from base_ownership import BaseReviewCheck, get_files_from_commit, splitpath, find_git_hash
+from base_ownership import BaseReviewCheck
+from git_tools import get_files_from_commit, git_readfile
 
 
 class Ownership(BaseReviewCheck):
     CHECK_FAIL_MESSAGE = '''
     File {filename} in {commit_hash}
     did not receive a LGTM from a code owner!
-    Try one of:
+    Have these guys review your code and try again :(
     {code_owners}
     '''
 
@@ -31,28 +33,18 @@ class Ownership(BaseReviewCheck):
     def get_owners(self, path):
         """Crawls up directory tree to until it finds a .owners file
 
-        path is relative to top project dir"""
-        owners_hash = ''
-        next_dir = ''
-        path_parts = splitpath(path)
+        Path is relative to top project dir
+        Returns None if no .owners file is found
+        """
+        parent_dir = os.path.dirname(path)
+        if not parent_dir:
+            return None
 
-        for i in range(len(path_parts)):
-            ls_tree = subprocess.Popen(
-                    'git ls-tree {git_hash}'.format(git_hash=(next_dir or self.oldsha)),
-                    shell=True,
-                    stdout=subprocess.PIPE).stdout.read().split('\n')
+        owners_file = git_readfile(os.path.join(parent_dir, '.owners'))
+        if owners_file:
+            return [line.strip() for line in owners_file.split() if not line.startswith('#')]
 
-            owners_hash = find_git_hash(ls_tree, '.owners') or owners_hash
-            next_dir = find_git_hash(ls_tree, path_parts[i])
-
-        owners_file = subprocess.Popen(
-                'git cat-file -p {git_hash}'.format(git_hash=owners_hash),
-                shell=True,
-                stdout=subprocess.PIPE).stdout.read()
-
-        owners = [line.strip() for line in owners_file.split() if not line.startswith('#')]
-
-        return owners
+        return self.get_owners(parent_dir)
 
 
 if __name__ == '__main__':

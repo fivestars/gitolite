@@ -6,36 +6,6 @@ import sys
 from phabricator import Phabricator
 
 
-def get_files_from_commit(commit_hash):
-    "Takes a commit hash and returns a list of files edited in the commit"
-    cmd = 'git show --pretty="format:" --name-only {0}'.format(commit_hash)
-    files_altered = subprocess.Popen(cmd, shell=True,
-            stdout=subprocess.PIPE).stdout.read().split()
-
-    return files_altered
-
-
-def splitpath(path):
-    "Splits a path into a list of its individual pieces"
-    parts = []
-    while path:
-        path, tail = os.path.split(path)
-        parts.insert(0, tail)
-    return parts
-
-
-def find_git_hash(ls_tree, name):
-    "Takes a git ls-tree output in list form and returns hash of desired file/dir if it exists"
-    for line in ls_tree:
-        if not line:
-            continue
-        _, _, git_hash, filename = line.split()
-        if filename == name:
-            return git_hash
-
-    return None
-
-
 class BaseReviewCheck(object):
     p = Phabricator()
 
