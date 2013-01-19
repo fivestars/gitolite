@@ -17,8 +17,7 @@ class Ownership(BaseReviewCheck):
     def check(self):
         "Returns False if a modified file has not been accepted by a code owner on Phabricator"
         for commit_hash in self.commit_hashes:
-            files_in_commit = self.repo.git.show('--pretty=format:',
-                    '--name-only', commit_hash).split()
+            files_in_commit = self.get_files_in_commit(commit_hash)
             accepted_by = self.commit_to_acceptors[commit_hash] | set([self.user_phid])
 
             for f in files_in_commit:
@@ -38,8 +37,7 @@ class Ownership(BaseReviewCheck):
         """
         parent_dir = os.path.dirname(path)
 
-        owners_file = self.repo.git.cat_file('-p',
-                'HEAD:' + os.path.join(parent_dir, '.owners'))
+        owners_file = self.read_git_file(os.path.join(parent_dir, '.owners'), commit=self.oldsha)
 
         if owners_file:
             return [line.strip() for line in owners_file.split() if not line.startswith('#')]

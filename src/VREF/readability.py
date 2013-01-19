@@ -20,14 +20,13 @@ class Readability(BaseReviewCheck):
     def check(self):
         "Returns False if a file has not been accepted by someone with readability in its language"
         for commit_hash in self.commit_hashes:
-            files_in_commit = self.repo.git.show('--pretty=format:',
-                    '--name-only', commit_hash).split()
+            files_in_commit = self.get_files_in_commit(commit_hash)
             accepted_by = self.commit_to_acceptors[commit_hash] | set([self.user_phid])
 
             for f in files_in_commit:
                 for language, checker, in self.language_checkers.items():
                     # should meet readability conditions at last commit, aka newsha
-                    file_contents = self.repo.git.cat_file('-p', self.newsha + ':' + f)
+                    file_contents = self.read_git_file(f, commit=self.newsha)
                     language_checker = checker(f, file_contents)
                     accepting_users = [self.phid_to_user[phid] for phid in accepted_by]
 

@@ -7,9 +7,7 @@ from git import Repo
 from phabricator import Phabricator
 
 
-class BaseReviewCheck(object):
-    p = Phabricator()
-
+class BaseVREF(object):
     gl_user = os.environ['GL_USER']
 
     def __init__(self, oldsha, newsha, repo_path):
@@ -17,13 +15,36 @@ class BaseReviewCheck(object):
         self.newsha = newsha
         self.repo = Repo(repo_path)
 
+        self.commit_hashes = self.get_all_commits(oldsha, newsha)
+
+    def fallthru(self, **kwargs):
+        "Prints failure message and VREF fallthru text"
+        print self.CHECK_FAIL_MESSAGE.format(**kwargs)
+        print self.FALLTHRU
+
+    def get_files_in_commit(self, commit_hash):
+        return self.repo.git.show('--pretty=format:', '--name-only', commit_hash).split()
+
+    def read_git_file(self, path, commit='HEAD'):
+        return self.repo.git.cat_file('-p', commit + ':' + path)
+
+    def get_all_commits(self, oldsha, newsha):
         commits = self.repo.commit(newsha).iter_parents()
         next_commit = commits.next()
 
-        self.commit_hashes = [newsha]
+        commit_hashes = [newsha]
         while next_commit.hexsha != oldsha:
-            self.commit_hashes.append(next_commit.hexsha)
+            commit_hashes.append(next_commit.hexsha)
             next_commit = commits.next()
+
+        return commit_hashes
+
+
+class BaseReviewCheck(BaseVREF):
+    p = Phabricator()
+
+    def __init__(self, oldsha, newsha, repo_path):
+        super(BaseReviewCheck, self).__init__(oldsha, newsha, repo_path)
 
         self.user_to_phid = dict((user['userName'], user['phid']) for user in self.p.user.query())
         self.phid_to_user = dict((phid, user) for user, phid in self.user_to_phid.items())
@@ -34,7 +55,8 @@ class BaseReviewCheck(object):
 
     def build_commit_to_acceptors_dict(self):
         "Return a dictionary of commit -> set of PHIDs that gave it a LGTM on Phabricator"
-        diffs = self.p.differential.query(commitHashes=[['gtcm', sha] for sha in self.commit_hashes],
+        diffs = self.p.differential.query(
+                commitHashes=[['gtcm', sha] for sha in self.commit_hashes],
                 status='status-open')
 
         revisions_involved = [diff['id'] for diff in diffs]
@@ -55,8 +77,3 @@ class BaseReviewCheck(object):
                 commit_to_acceptors[commit] = commit_to_acceptors[commit] | set(accepted_by)
 
         return commit_to_acceptors
-
-    def fallthru(self, **kwargs):
-        "Prints failure message and VREF fallthru text"
-        print self.CHECK_FAIL_MESSAGE.format(**kwargs)
-        print self.FALLTHRU
