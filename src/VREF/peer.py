@@ -13,7 +13,7 @@ class Peer(BaseReviewCheck):
     def check(self):
         "Returns False if a commit has not been accepted on Phabricator by not the pusher"
         for commit_hash in self.commit_hashes:
-            if not (self.commit_to_acceptors[commit_hash] - set([self.user_phid])):
+            if not (self.commit_to_acceptors[commit_hash] - set([self.gl_user])):
                 self.fallthru(commit_hash=commit_hash)
                 return False
 

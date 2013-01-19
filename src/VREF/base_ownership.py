@@ -8,9 +8,9 @@ from phabricator import Phabricator
 
 
 class BaseVREF(object):
-    gl_user = os.environ['GL_USER']
-
     def __init__(self, oldsha, newsha, repo_path):
+        self.gl_user = os.environ['GL_USER']
+
         self.oldsha = oldsha
         self.newsha = newsha
         self.repo = Repo(repo_path)
@@ -46,15 +46,12 @@ class BaseReviewCheck(BaseVREF):
     def __init__(self, oldsha, newsha, repo_path):
         super(BaseReviewCheck, self).__init__(oldsha, newsha, repo_path)
 
-        self.user_to_phid = dict((user['userName'], user['phid']) for user in self.p.user.query())
-        self.phid_to_user = dict((phid, user) for user, phid in self.user_to_phid.items())
-
-        self.user_phid = self.user_to_phid[self.gl_user]
+        self.phid_to_user = dict((user['phid'], user['userName']) for user in self.p.user.query())
 
         self.commit_to_acceptors = self.build_commit_to_acceptors_dict()
 
     def build_commit_to_acceptors_dict(self):
-        "Return a dictionary of commit -> set of PHIDs that gave it a LGTM on Phabricator"
+        "Return a dictionary of commit -> set of usernames that gave it a LGTM on Phabricator"
         diffs = self.p.differential.query(
                 commitHashes=[['gtcm', sha] for sha in self.commit_hashes],
                 status='status-open')
@@ -68,8 +65,8 @@ class BaseReviewCheck(BaseVREF):
             revision_id = int(diff['id'])
             comments = revision_to_comments[str(revision_id)]
 
-            accepted_by = [comment['authorPHID'] for comment in comments \
-                                                 if 'LGTM' in comment['content']]
+            accepted_by = [self.phid_to_user[comment['authorPHID']] for comment in comments \
+                                                                    if 'LGTM' in comment['content']]
 
             commits_in_revision = [sha for hash_type, sha in diff['hashes'] if hash_type == 'gtcm']
 
