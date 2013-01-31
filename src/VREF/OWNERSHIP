@@ -7,14 +7,14 @@
 # exit status:
 #   always 0
 
-# TODO what to do here?
+# TODO (kevin): Is this necessary?
 # die() { echo "$@" >&2; exit 1; }
 # [ -z "$8" ] && die "not meant to be run manually"
 
-oldsha=$2
-newsha=$3
+oldsha=${2}
+newsha=${3}
 
-PYTHONPATH=$GL_BINDIR/lib/site-packages
-python -m fsqa.ownership $oldsha $newsha $PWD
+PYTHONPATH=${GL_BINDIR}/lib/site-packages
+python -m fsqa.ownership ${oldsha} ${newsha} ${PWD}
 
 exit 0
