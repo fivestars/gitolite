@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# gitolite VREF to check that a peer has reviewed the code
+# gitolite VREF to check code ownership
 
 # see gitolite docs for what the first 7 arguments mean
 
@@ -15,6 +15,6 @@ oldsha=${2}
 newsha=${3}
 
 export PYTHONPATH=${GL_BINDIR}/lib/site-packages
-python -m fsqa.peer ${oldsha} ${newsha} ${PWD}
+python -m fsqa.differential ${oldsha} ${newsha} ${PWD}
 
 exit 0

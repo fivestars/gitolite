@@ -14,7 +14,7 @@
 oldsha=${2}
 newsha=${3}
 
-PYTHONPATH=${GL_BINDIR}/lib/site-packages
+export PYTHONPATH=${GL_BINDIR}/lib/site-packages
 python -m fsqa.readability.__init__ ${oldsha} ${newsha} ${PWD}
 
 exit 0
