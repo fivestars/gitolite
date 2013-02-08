@@ -11,10 +11,12 @@
 # die() { echo "$@" >&2; exit 1; }
 # [ -z "$8" ] && die "not meant to be run manually"
 
+ref=${1}
 oldsha=${2}
 newsha=${3}
+branch=${8}
 
 export PYTHONPATH=${GL_BINDIR}/lib/site-packages
-python -m fsqa.differential ${oldsha} ${newsha} ${PWD}
+python -m fsqa.differential ${ref} ${oldsha} ${newsha} ${PWD} ${branch}
 
 exit 0
