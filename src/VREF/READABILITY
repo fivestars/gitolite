@@ -14,9 +14,10 @@
 ref=${1}
 oldsha=${2}
 newsha=${3}
-branch=${8}
+shift 7
+branches=${@}
 
 export PYTHONPATH=${GL_BINDIR}/lib/site-packages
-python -m fsqa.readability.__init__ ${ref} ${oldsha} ${newsha} ${PWD} ${branch}
+python -m fsqa.readability.__init__ ${ref} ${oldsha} ${newsha} ${PWD} ${branches}
 
 exit 0
